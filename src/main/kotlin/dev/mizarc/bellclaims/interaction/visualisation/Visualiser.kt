@@ -5,26 +5,14 @@ import dev.mizarc.bellclaims.api.PartitionService
 import dev.mizarc.bellclaims.api.PlayerStateService
 import dev.mizarc.bellclaims.api.VisualisationService
 import dev.mizarc.bellclaims.domain.claims.Claim
-import dev.mizarc.bellclaims.domain.partitions.Partition
-import dev.mizarc.bellclaims.domain.partitions.Position2D
 import dev.mizarc.bellclaims.domain.partitions.Position3D
-import dev.mizarc.bellclaims.domain.players.PlayerStateRepository
-import dev.mizarc.bellclaims.infrastructure.getClaimTool
 import dev.mizarc.bellclaims.utils.carpetBlocks
 import org.bukkit.Chunk
 import org.bukkit.Location
 import org.bukkit.Material
-import org.bukkit.entity.EntityType
 import org.bukkit.entity.Player
-import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
-import org.bukkit.event.entity.EntityPickupItemEvent
-import org.bukkit.event.inventory.InventoryClickEvent
-import org.bukkit.event.player.PlayerDropItemEvent
-import org.bukkit.event.player.PlayerInteractEvent
-import org.bukkit.event.player.PlayerItemHeldEvent
 import org.bukkit.plugin.java.JavaPlugin
-import kotlin.concurrent.thread
 
 class Visualiser(private val plugin: JavaPlugin,
                  private val claimService: ClaimService,
@@ -32,7 +20,7 @@ class Visualiser(private val plugin: JavaPlugin,
                  private val playerStateService: PlayerStateService,
                  private val visualisationService: VisualisationService) : Listener {
     /**
-     * Display claim visualisation to target player
+     * Display visualisation of all nearby claims to target player.
      */
     fun show(player: Player): MutableMap<Claim, Set<Position3D>> {
         val playerState = playerStateService.getByPlayer(player) ?: return mutableMapOf()
@@ -54,7 +42,7 @@ class Visualiser(private val plugin: JavaPlugin,
     }
 
     /**
-     * Display claim visualisation to target player
+     * Display claim visualisation to target player.
      */
     fun show(player: Player, claim: Claim): Set<Position3D> {
         val playerState = playerStateService.getByPlayer(player) ?: return mutableSetOf()
@@ -70,6 +58,24 @@ class Visualiser(private val plugin: JavaPlugin,
         playerState.visualisedBlockPositions[claim] = borders
         playerState.isVisualisingClaims = true
         return borders
+    }
+
+    /**
+     * Visualise a block with the "new" colour.
+     */
+    fun showNew(player: Player, position3D: Position3D) {
+        val playerState = playerStateService.getByPlayer(player) ?: return
+        setVisualisedBlock(player, position3D, Material.LIME_GLAZED_TERRACOTTA, Material.LIME_CARPET)
+        playerState.selectedVisualisedBlockPosition = position3D
+    }
+
+    /**
+     * Visualise a block with the "edit" colour.
+     */
+    fun showEdit(player: Player, position3D: Position3D) {
+        val playerState = playerStateService.getByPlayer(player) ?: return
+        setVisualisedBlock(player, position3D, Material.YELLOW_GLAZED_TERRACOTTA, Material.YELLOW_CARPET)
+        playerState.selectedVisualisedBlockPosition = position3D
     }
 
     /**
@@ -239,5 +245,10 @@ class Visualiser(private val plugin: JavaPlugin,
                 player.sendBlockChange(position.toLocation(player.world), blockData)
             }
         }
+
+        // Revert selected block if it exists
+        val selectedBlock = playerState.selectedVisualisedBlockPosition ?: return
+        val blockData = player.world.getBlockAt(selectedBlock.toLocation(player.world)).blockData
+        player.sendBlockChange(selectedBlock.toLocation(player.world), blockData)
     }
 }
