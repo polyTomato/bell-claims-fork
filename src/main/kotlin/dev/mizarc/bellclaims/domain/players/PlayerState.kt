@@ -17,6 +17,8 @@ class PlayerState(val player: OfflinePlayer) {
     var isHoldingClaimTool = false
     var isVisualisingClaims = false
     var visualisedBlockPositions: MutableMap<Claim, Set<Position3D>> = mutableMapOf()
+    var selectedVisualisedBlockPosition: Position3D? = null
+    var currentClaimModification: ClaimModificationType? = null
 
     /**
      * Gets the online version of the player instance.
@@ -26,4 +28,12 @@ class PlayerState(val player: OfflinePlayer) {
     fun getOnlinePlayer(): Player? {
         return Bukkit.getPlayer(player.uniqueId)
     }
+}
+
+/**
+ * Defines what type of claim modification action the player is doing.
+ */
+enum class ClaimModificationType {
+    New,
+    Edit
 }
