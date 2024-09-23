@@ -83,6 +83,8 @@ class RuleBehaviour {
             Companion::blockSpreadInClaim)
         val dispense = RuleExecutor(BlockDispenseEvent::class.java, Companion::cancelEvent,
             Companion::blockDispenseInClaim)
+        val fluidBlockForm = RuleExecutor(BlockFormEvent::class.java, Companion::cancelBlockFormEvent,
+            Companion::blockFormInClaim)
 
         /**
          * Cancel any cancellable event.
@@ -558,6 +560,23 @@ class RuleBehaviour {
             val partition = partitionService.getByLocation(placeLocation) ?: return listOf()
             val claim = claimService.getById(partition.claimId) ?: return listOf()
             return listOf(claim)
+        }
+
+        private fun blockFormInClaim(event: Event, claimService: ClaimService,
+                                     partitionService: PartitionService): List<Claim> {
+            if (event !is BlockFormEvent) return listOf()
+            val partition = partitionService.getByLocation(event.block.location) ?: return listOf()
+            val claim = claimService.getById(partition.claimId) ?: return listOf()
+            return listOf(claim)
+        }
+
+        private fun cancelBlockFormEvent(event: Event, claimService: ClaimService,
+                                     partitionService: PartitionService, flagService: FlagService): Boolean {
+            if (event !is BlockFormEvent) return false
+            val blocks = arrayOf(Material.ICE, Material.SNOW)
+            if (event.block.type !in blocks) return false
+            event.isCancelled = true
+            return true
         }
     }
 }
